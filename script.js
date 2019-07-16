@@ -3,13 +3,13 @@
 const STORE = {
   items: [
     // eslint-disable-next-line no-undef
-    {id: cuid(), name: 'apples', checked: false},
+    {id: cuid(), name: 'apples', checked: false, canEdit: false},
     // eslint-disable-next-line no-undef
-    {id: cuid(), name: 'oranges', checked: false},
+    {id: cuid(), name: 'oranges', checked: false, canEdit: false},
     // eslint-disable-next-line no-undef
-    {id: cuid(), name: 'milk', checked: true},
+    {id: cuid(), name: 'milk', checked: true, canEdit: false},
     // eslint-disable-next-line no-undef
-    {id: cuid(), name: 'bread', checked: false}
+    {id: cuid(), name: 'bread', checked: false, canEdit: false}
   ],
   hideCompleted: false,
   filter: {
@@ -21,13 +21,21 @@ const STORE = {
 function generateItemElement(item) {
   return `
     <li data-item-id="${item.id}">
-      <span class="shopping-item js-shopping-item ${item.checked ? 'shopping-item__checked' : ''}">${item.name}</span>
+      
+      <span class="shopping-item js-shopping-item 
+      ${item.checked ? 'shopping-item__checked' : ''}" 
+      ${item.canEdit ? 'contenteditable="true"' : ''}
+      >${item.name}</span>
+      
       <div class="shopping-item-controls">
         <button class="shopping-item-toggle js-item-toggle">
             <span class="button-label">check</span>
         </button>
         <button class="shopping-item-delete js-item-delete">
             <span class="button-label">delete</span>
+        </button>
+        <button class="shopping-item-edit js-item-edit">
+            <span class="button-label">${item.canEdit ? 'done' : 'edit'}</span>
         </button>
       </div>
     </li>`;
@@ -137,6 +145,25 @@ function handleDeleteItemClicked() {
   });
 }
 
+function enableEditListItem(itemId) {
+  const item = STORE.items.find(item => item.id === itemId);
+  const newItemName = $(event.target).parents('li').find('.js-shopping-item');
+  if (item.canEdit) {
+    item.name = newItemName.html();
+  }
+  item.canEdit = !item.canEdit;
+}
+
+function handleEditItemClicked() {
+  $('.js-shopping-list').on('click', '.js-item-edit', event => {
+    const itemID = getItemIdFromElement(event.currentTarget);
+    enableEditListItem(itemID);
+    renderShoppingList();
+    $(`li[data-item-id="${itemID}"] .js-shopping-item`).focus();
+
+  });
+}
+
 // Toggles the STORE.hideCompleted property
 function toggleHideFilter() {
   STORE.hideCompleted = !STORE.hideCompleted;
@@ -150,6 +177,7 @@ function handleToggleHideFilter() {
   });
 }
 
+
 // this function will be our callback when the page loads. it's responsible for
 // initially rendering the shopping list, and activating our individual functions
 // that handle new item submission and user clicks on the "check" and "delete" buttons
@@ -161,6 +189,7 @@ function handleShoppingList() {
   handleDeleteItemClicked();
   handleToggleHideFilter();
   handleFilterBySubmit();
+  handleEditItemClicked();
 }
 
 // when the page loads, call `handleShoppingList`
