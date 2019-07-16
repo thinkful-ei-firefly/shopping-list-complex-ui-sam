@@ -11,7 +11,11 @@ const STORE = {
     // eslint-disable-next-line no-undef
     {id: cuid(), name: 'bread', checked: false}
   ],
-  hideCompleted: false
+  hideCompleted: false,
+  filter: {
+    filterOn: true,
+    filterBy: ''
+  }
 };
 
 function generateItemElement(item) {
@@ -31,7 +35,6 @@ function generateItemElement(item) {
 
 
 function generateShoppingItemsString(shoppingList) {
-  console.log('Generating shopping list element');
 
   const items = shoppingList.map((item) => generateItemElement(item));
   
@@ -41,7 +44,6 @@ function generateShoppingItemsString(shoppingList) {
 
 function renderShoppingList() {
   // render the shopping list in the DOM
-  console.log('`renderShoppingList` ran');
 
   // set up a copy of the store's items in a local variable that we will reassign to a new
   // version if any filtering of the list occurs
@@ -51,6 +53,10 @@ function renderShoppingList() {
   // where ONLY items with a "checked" property of false are included
   if (STORE.hideCompleted) {
     filteredItems = filteredItems.filter(item => !item.checked);
+  }
+  
+  if (STORE.filter.filterOn) {
+    filteredItems = filteredItems.filter(item => item.name.includes(STORE.filter.filterBy));
   }
 
   // at this point, all filtering work has been done (or not done, if that's the current settings), so
@@ -63,14 +69,12 @@ function renderShoppingList() {
 
 
 function addItemToShoppingList(itemName) {
-  console.log(`Adding "${itemName}" to shopping list`);
   STORE.items.push({name: itemName, checked: false});
 }
 
 function handleNewItemSubmit() {
   $('#js-shopping-list-form').submit(function(event) {
     event.preventDefault();
-    console.log('`handleNewItemSubmit` ran');
     const newItemName = $('.js-shopping-list-entry').val();
     $('.js-shopping-list-entry').val('');
     addItemToShoppingList(newItemName);
@@ -78,8 +82,15 @@ function handleNewItemSubmit() {
   });
 }
 
+function handleFilterBySubmit() {
+  $('#js-shopping-list-filter').submit(function(event) {
+    event.preventDefault();
+    STORE.filter.filterBy = $('.js-shopping-list-filter').val();
+    renderShoppingList();
+  });
+}
+
 function toggleCheckedForListItem(itemId) {
-  console.log('Toggling checked property for item with id ' + itemId);
   const item = STORE.items.find(item => item.id === itemId);
   item.checked = !item.checked;
 }
@@ -93,7 +104,6 @@ function getItemIdFromElement(item) {
 
 function handleItemCheckClicked() {
   $('.js-shopping-list').on('click', '.js-item-toggle', event => {
-    console.log('`handleItemCheckClicked` ran');
     const id = getItemIdFromElement(event.currentTarget);
     toggleCheckedForListItem(id);
     renderShoppingList();
@@ -103,7 +113,6 @@ function handleItemCheckClicked() {
 
 // name says it all. responsible for deleting a list item.
 function deleteListItem(itemId) {
-  console.log(`Deleting item with id  ${itemId} from shopping list`)
 
   // as with `addItemToShoppingLIst`, this function also has the side effect of
   // mutating the global STORE value.
@@ -151,6 +160,7 @@ function handleShoppingList() {
   handleItemCheckClicked();
   handleDeleteItemClicked();
   handleToggleHideFilter();
+  handleFilterBySubmit();
 }
 
 // when the page loads, call `handleShoppingList`
